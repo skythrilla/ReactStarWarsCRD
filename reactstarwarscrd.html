@@ -1,0 +1,200 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: verdana;
+      }
+      .selected {
+        background-color: dodgerblue;
+        color: white;
+        border: black 2px solid;
+        border-radius: 3px;
+      }
+      a {
+        margin-right: 10px;
+        color: dodgerblue;
+      }
+      #person {
+        display: flex;
+        justify-content: space-around;
+      }
+      #nav {
+        display: flex;
+        justify-content: space-around;
+        padding-bottom: 30px;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script
+      src="https://unpkg.com/react@16/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/5.0.0/react-router-dom.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const domain = "https://profs-star-wars.herokuapp.com/people";
+      const { HashRouter, Route, NavLink } = ReactRouterDOM;
+
+      const Home = () => <div id="person">Welcome!!</div>;
+      const CreatePerson = ({
+        onCreate,
+        history,
+        handleSubmit,
+        handleChange,
+        name
+      }) => {
+        return (
+          <div id="person">
+            <form onSubmit={handleSubmit}>
+              <h1>Create a Person</h1>
+              <label htmlFor="name" />
+              <input
+                type="text"
+                name="name"
+                value={name}
+                onChange={handleChange}
+              />
+              <button
+                disabled={!name ? true : false}
+                type="submit"
+                onClick={() => onCreate(name, history)}
+              >
+                Create
+              </button>
+            </form>
+          </div>
+        );
+      };
+      const People = ({ people, onDelete }) => {
+        return (
+          <div id="person">
+            <ul>
+              {people.map((person, idx) => (
+                <li key={idx}>
+                  {person}{" "}
+                  <button onClick={() => onDelete(idx)} key={idx}>
+                    x
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      };
+      const Nav = ({ people, current }) => {
+        return (
+          <div id="nav">
+            <NavLink exact to="/" activeClassName="selected">
+              Home
+            </NavLink>
+            <NavLink exact to="/people" activeClassName="selected">
+              People ({people.length})
+            </NavLink>
+            <NavLink exact to="/people/create" activeClassName="selected">
+              Create a Person
+            </NavLink>
+          </div>
+        );
+      };
+
+      class App extends React.Component {
+        constructor() {
+          super();
+          this.state = {
+            people: [],
+            name: ""
+          };
+          this.onDelete = this.onDelete.bind(this);
+          this.onCreate = this.onCreate.bind(this);
+          this.handleSubmit = this.handleSubmit.bind(this);
+          this.handleChange = this.handleChange.bind(this);
+        }
+        onCreate(person, history) {
+          event.preventDefault();
+          const people = [...this.state.people, person];
+          this.setState({ people });
+          history.push("/people");
+          this.state.name = "";
+        }
+        onDelete(idx) {
+          const people = this.state.people.filter(
+            (person, _idx) => _idx !== idx
+          );
+          this.setState({ people });
+        }
+        handleChange(event) {
+          this.setState({
+            [event.target.name]: event.target.value
+          });
+        }
+        handleSubmit(event) {
+          event.preventDefault();
+          console.log(this.state);
+          this.setState({
+            name: ""
+          });
+        }
+        async componentDidMount() {
+          try {
+            const res = await axios.get(`${domain}`);
+            const starwars = res.data;
+            const people = [];
+
+            for (let i = 0; i < starwars.length; i++)
+              people[i] = starwars[i].name;
+
+            this.setState({ people });
+          } catch (err) {
+            console.error("There was a problem fetching people:", err);
+          }
+        }
+
+        render() {
+          const { people, name } = this.state;
+          const { onDelete, onCreate, handleChange, handleSubmit } = this;
+          const current = location.hash.slice(1);
+
+          return (
+            <HashRouter>
+              <h1>Star Wars CRD (no U)</h1>
+              <Route render={() => <Nav people={people} current={current} />} />
+              <Route path="/" exact component={Home} />
+              <Route
+                path="/people"
+                exact
+                render={() => (
+                  <People
+                    people={people}
+                    onDelete={onDelete}
+                    onCreate={onCreate}
+                  />
+                )}
+              />
+              <Route
+                path="/people/create"
+                render={({ history }) => (
+                  <CreatePerson
+                    onCreate={onCreate}
+                    history={history}
+                    handleSubmit={handleSubmit}
+                    handleChange={handleChange}
+                    name={name}
+                  />
+                )}
+              />
+            </HashRouter>
+          );
+        }
+      }
+      const root = document.querySelector("#root");
+      ReactDOM.render(<App />, root);
+    </script>
+  </body>
+</html>
