@@ -43,6 +43,7 @@
       const { HashRouter, Route, NavLink } = ReactRouterDOM;
 
       const Home = () => <div id="person">Welcome!!</div>;
+      // Fancy destructuring of props!
       const CreatePerson = ({
         onCreate,
         history,
@@ -111,6 +112,7 @@
             people: [],
             name: ""
           };
+          // Good binding
           this.onDelete = this.onDelete.bind(this);
           this.onCreate = this.onCreate.bind(this);
           this.handleSubmit = this.handleSubmit.bind(this);
@@ -118,6 +120,7 @@
         }
         onCreate(person, history) {
           event.preventDefault();
+          // Nice work not mutating state inside of setState
           const people = [...this.state.people, person];
           this.setState({ people });
           history.push("/people");
@@ -130,12 +133,14 @@
           this.setState({ people });
         }
         handleChange(event) {
+          // Like the keeping it flexible with [event.target.name]
           this.setState({
             [event.target.name]: event.target.value
           });
         }
         handleSubmit(event) {
           event.preventDefault();
+          // Generally, try to remove console.logs that are unneeded after you're done developing
           console.log(this.state);
           this.setState({
             name: ""
@@ -143,15 +148,18 @@
         }
         async componentDidMount() {
           try {
+            // Good work putting the api route inside a variable.  You don't need the template string if it's all one variable.  E.g. domain instead of `${domain}`
             const res = await axios.get(`${domain}`);
             const starwars = res.data;
             const people = [];
 
             for (let i = 0; i < starwars.length; i++)
+              // This isn't all that necessary if all you're calling out is the `name` property of each person in your jsx.   You could just set this.state.people
               people[i] = starwars[i].name;
 
             this.setState({ people });
           } catch (err) {
+            // I like the console.error!  This is good for a try/catch block.
             console.error("There was a problem fetching people:", err);
           }
         }
@@ -162,6 +170,7 @@
           const current = location.hash.slice(1);
 
           return (
+            // Nice routes
             <HashRouter>
               <h1>Star Wars CRD (no U)</h1>
               <Route render={() => <Nav people={people} current={current} />} />
